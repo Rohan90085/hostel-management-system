@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hostel Management System</title>
+</head>
+<style>
+    body{
+    font-family: Arial, sans-serif;
+    background-color: black;
+    color: whitesmoke;
+}
+.header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: rgba(124, 129, 135, 0.03);
+    box-shadow: 0 2px 12px rgba(250, 248, 248, 0.957);
+    border-radius: 8px;
+    margin-bottom: 50px;
+    
+}
+.hmenu{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    /*background-color: aqua;*/
+    margin-bottom: 40px;
+}
+.list{
+    display: flex;
+    justify-content: space-between;
+}
+.students, .rooms, .allocation {
+    width: 30%;
+}
+.student,.room,.rallocation,.search {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 20%;
+    background-color: rgba(124, 129, 135, 0.03);
+    padding: 5px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(250, 248, 248, 0.957);
+}
+.student:hover,.room:hover,.rallocation:hover,.search:hover {
+    box-shadow: 0 4px 12px rgba(234, 232, 232, 0.8);
+    transform: scale(1.1);
+    transition: all 0.8s ;
+    box-shadow: 0 2px 12px rgba(220, 19, 19, 0.957);
+}
+.rooms, .students, .allocation {
+    background-color: rgba(124, 129, 135, 0.03);
+    padding: 90px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(25, 211, 224, 0.957);
+}
+
+
+</style>
+<script>
+async function searchStudent() {
+    const keyword = document.getElementById("searchText").value;
+
+    if (!keyword) {
+        alert("Please enter ID or Name");
+        return;
+    }
+
+    const response = await fetch("/students/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword })
+    });
+
+    const data = await response.json();
+
+    if (data.length === 0) {
+        alert("No student found");
+        return;
+    }
+
+    // Build message for alert
+    let message = "Search Result(s):\n\n";
+
+    data.forEach(s => {
+        message += 
+            `ID: ${s.id}\n` +
+            `Name: ${s.name}\n` +
+            `Phone: ${s.phone}\n` +
+            `Gender: ${s.gender}\n\n`;
+    });
+
+    alert(message);
+}
+</script>
+<body>
+<div class="header">
+<h1>Hostel Management Dashboard</h1>
+<h2> Developed by Rohan P H</h2>
+<!-- <h2 style="font-family: 'Algerian';">Rushikesh</h2>
+<h2 style="font-family: 'Algerian';">Sangamesh</h2> -->
+<!-- style="font-family: 'Algerian';" -->
+</div>
+<div class="hmenu">
+
+
+<!-- ============= ADD STUDENT =============== -->
+ <div  class="student">
+<h2>Add Student</h2>
+<form method="POST" action="/students/add">
+    <input type="text" name="name" placeholder="Name" required><br><br>
+    <input type="text" name="phone" placeholder="Phone" required><br><br>
+    <input type="text" name="gender" placeholder="Gender" required><br><br>
+    <button>Add Student</button>
+</form>
+</div>
+
+<!-- ============= ADD ROOM =============== -->
+ <div class="room">
+ 
+<h2>Add Room</h2>
+<form method="POST" action="/rooms/add">
+    <input type="text" name="room_no" placeholder="Room No" required><br><br>
+    <input type="number" name="capacity" placeholder="Capacity" required><br><br>
+    <button>Add Room</button>
+</form>
+</div>
+
+<!-- ============= ALLOCATE ROOM =============== -->
+ <div class="rallocation">
+<h2>Allocate Room</h2>
+<form method="POST" action="/allocate">
+    <label>Student:</label>
+    <select name="student_id">
+        <% students.forEach(s => { %>
+            <option value="<%= s.id %>"><%= s.name %></option>
+        <% }) %>
+    </select>
+    <br><br>
+
+    <label>Available Room:</label>
+    <select name="room_id">
+        <% availableRooms.forEach(r => { %>
+            <option value="<%= r.id %>"><%= r.room_no %></option>
+        <% }) %>
+    </select>
+    <br><br>
+
+    <button>Allocate</button>
+    </div>
+     <div class="search">
+    <h2>Search Student</h2>
+
+ <input type="text" id="searchText" placeholder="Enter ID or Name">
+ <button onclick="searchStudent()">Search</button>
+ </div>
+</form>
+</div>
+
+<hr>
+
+<div class="list">
+    <div class="students">
+<!-- ============= STUDENTS LIST =============== -->
+<h2>Students List</h2>
+<% students.forEach(s => { %>
+    <p>
+        ID: <%= s.id %><br>
+        Name: <%= s.name %><br>
+        Phone: <%= s.phone %><br>
+        Gender: <%= s.gender %><br>
+
+        <a href="/students/delete/<%= s.id %>">
+            <button>Delete</button>
+        </a>
+        
+    </p>
+<% }) %>
+
+</div>
+
+<div class="rooms">
+
+<!-- ============= ROOMS LIST =============== -->
+<h2>Rooms List</h2>
+<% rooms.forEach(r => { %>
+    <p>
+        ID: <%= r.id %><br>
+        Room No: <%= r.room_no %><br>
+        Capacity: <%= r.capacity %><br>
+        Occupied: <%= r.occupied %><br>
+
+        <a href="/rooms/delete/<%= r.id %>">
+            <button>Delete</button>
+        </a>
+        
+    </p>
+<% }) %>
+
+</div>
+<div class="allocation">
+<!-- ============= ALLOCATIONS LIST =============== -->
+<h2>Room Allocations</h2>
+<% allocations.forEach(a => { %>
+    <p>
+        ID: <%= a.id %><br>
+        Student: <%= a.name %><br>
+        Room: <%= a.room_no %><br>
+        Date: <%= a.date_allocated %><br>
+
+        <a href="/allocations/delete/<%= a.id %>">
+            <button>Delete</button>
+        </a>
+        
+    </p>
+<% }) %>
+</div>
+</div>
+<div class="fotter">
+
+</div>
+</body>
+</html>
+
