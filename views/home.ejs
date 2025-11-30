@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,13 +18,45 @@
     box-shadow: 0 2px 12px rgba(250, 248, 248, 0.957);
     border-radius: 8px;
     margin-bottom: 50px;
-    
 }
+
+/* Success/Error Message Banner */
+.message-banner {
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    animation: slideDown 0.5s ease-out;
+}
+
+.success-banner {
+    background-color: #28a745;
+    color: white;
+    border: 2px solid #1e7e34;
+}
+
+.error-banner {
+    background-color: #dc3545;
+    color: white;
+    border: 2px solid #bd2130;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 .hmenu{
     display: flex;
     justify-content: space-between;
     width: 100%;
-    /*background-color: aqua;*/
     margin-bottom: 40px;
 }
 .list{
@@ -58,9 +89,134 @@
     box-shadow: 0 2px 12px rgba(25, 211, 224, 0.957);
 }
 
+/* Search Result Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    background-color: #1a1a1a;
+    margin: 10% auto;
+    padding: 30px;
+    border: 2px solid #19d3e0;
+    border-radius: 12px;
+    width: 50%;
+    max-width: 600px;
+    box-shadow: 0 4px 20px rgba(25, 211, 224, 0.5);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: #19d3e0;
+}
+
+.result-item {
+    background-color: rgba(124, 129, 135, 0.1);
+    padding: 20px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 4px solid #19d3e0;
+}
+
+.result-item p {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+.result-item strong {
+    color: #19d3e0;
+}
+
+.room-badge {
+    display: inline-block;
+    background-color: #19d3e0;
+    color: black;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.no-room {
+    background-color: #dc1413;
+    color: white;
+}
 
 </style>
 <script>
+// Display messages from URL parameters
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+    
+    if (success) {
+        showMessage(getSuccessMessage(success), 'success');
+    }
+    if (error) {
+        showMessage(getErrorMessage(error), 'error');
+    }
+}
+
+function getSuccessMessage(code) {
+    const messages = {
+        'student_added': '✓ Student added successfully!',
+        'student_deleted': '✓ Student deleted successfully!',
+        'room_added': '✓ Room created successfully!',
+        'room_deleted': '✓ Room deleted successfully!',
+        'room_allocated': '✓ Room allocated successfully!',
+        'allocation_deleted': '✓ Allocation removed successfully!'
+    };
+    return messages[code] || '✓ Operation successful!';
+}
+
+function getErrorMessage(code) {
+    const messages = {
+        'student_already_allocated': '✗ This student already has a room allocated!',
+        'room_full': '✗ This room is full!',
+        'room_not_found': '✗ Room not found!',
+        'allocation_failed': '✗ Allocation failed. Please try again.',
+        'add_student_failed': '✗ Failed to add student.',
+        'delete_student_failed': '✗ Failed to delete student.',
+        'room_exists_or_failed': '✗ Room number already exists or operation failed.',
+        'delete_room_failed': '✗ Cannot delete room. Remove allocations first.',
+        'delete_room_has_allocations': '✗ Cannot delete room. Remove all student allocations first.',
+        'allocation_not_found': '✗ Allocation not found.',
+        'delete_allocation_failed': '✗ Failed to remove allocation.',
+        'missing_data': '✗ Please select both student and room.'
+    };
+    return messages[code] || '✗ An error occurred!';
+}
+
+function showMessage(message, type) {
+    const banner = document.createElement('div');
+    banner.className = `message-banner ${type}-banner`;
+    banner.textContent = message;
+    
+    document.body.insertBefore(banner, document.body.firstChild);
+    
+    setTimeout(() => {
+        banner.style.transition = 'opacity 0.5s';
+        banner.style.opacity = '0';
+        setTimeout(() => banner.remove(), 500);
+    }, 4000);
+}
+
 async function searchStudent() {
     const keyword = document.getElementById("searchText").value;
 
@@ -82,33 +238,58 @@ async function searchStudent() {
         return;
     }
 
-    // Build message for alert
-    let message = "Search Result(s):\n\n";
-
+    let resultsHTML = '';
+    
     data.forEach(s => {
-        message += 
-            `ID: ${s.id}\n` +
-            `Name: ${s.name}\n` +
-            `Phone: ${s.phone}\n` +
-            `Gender: ${s.gender}\n\n`;
+        const roomInfo = s.room_no 
+            ? `<span class="room-badge">${s.room_no}</span>` 
+            : `<span class="room-badge no-room">Not Allocated</span>`;
+        
+        resultsHTML += `
+            <div class="result-item">
+                <p><strong>ID:</strong> ${s.id}</p>
+                <p><strong>Name:</strong> ${s.name}</p>
+                <p><strong>Phone:</strong> ${s.phone}</p>
+                <p><strong>Gender:</strong> ${s.gender}</p>
+                <p><strong>Room Number:</strong> ${roomInfo}</p>
+            </div>
+        `;
     });
 
-    alert(message);
+    document.getElementById('searchResults').innerHTML = resultsHTML;
+    document.getElementById('searchModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('searchModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('searchModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
 }
 </script>
 <body>
 <div class="header">
 <h1>Hostel Management Dashboard</h1>
-<h2> Developed by Rohan P H</h2>
-<!-- <h2 style="font-family: 'Algerian';">Rushikesh</h2>
-<h2 style="font-family: 'Algerian';">Sangamesh</h2> -->
-<!-- style="font-family: 'Algerian';" -->
+<h2>Developed by Rohan P H</h2>
 </div>
+
+<!-- Search Results Modal -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 style="color: #19d3e0; margin-bottom: 20px;">Search Results</h2>
+        <div id="searchResults"></div>
+    </div>
+</div>
+
 <div class="hmenu">
 
-
 <!-- ============= ADD STUDENT =============== -->
- <div  class="student">
+<div class="student">
 <h2>Add Student</h2>
 <form method="POST" action="/students/add">
     <input type="text" name="name" placeholder="Name" required><br><br>
@@ -119,8 +300,7 @@ async function searchStudent() {
 </div>
 
 <!-- ============= ADD ROOM =============== -->
- <div class="room">
- 
+<div class="room">
 <h2>Add Room</h2>
 <form method="POST" action="/rooms/add">
     <input type="text" name="room_no" placeholder="Room No" required><br><br>
@@ -130,34 +310,46 @@ async function searchStudent() {
 </div>
 
 <!-- ============= ALLOCATE ROOM =============== -->
- <div class="rallocation">
+<div class="rallocation">
 <h2>Allocate Room</h2>
 <form method="POST" action="/allocate">
-    <label>Student:</label>
-    <select name="student_id">
-        <% students.forEach(s => { %>
-            <option value="<%= s.id %>"><%= s.name %></option>
-        <% }) %>
+    <label>Student (Unallocated):</label>
+    <select name="student_id" required>
+        <option value="">-- Select Student --</option>
+        <% if (unallocatedStudents && unallocatedStudents.length > 0) { %>
+            <% unallocatedStudents.forEach(s => { %>
+                <option value="<%= s.id %>"><%= s.name %> (ID: <%= s.id %>)</option>
+            <% }) %>
+        <% } else { %>
+            <option value="" disabled>No unallocated students</option>
+        <% } %>
     </select>
     <br><br>
 
     <label>Available Room:</label>
-    <select name="room_id">
-        <% availableRooms.forEach(r => { %>
-            <option value="<%= r.id %>"><%= r.room_no %></option>
-        <% }) %>
+    <select name="room_id" required>
+        <option value="">-- Select Room --</option>
+        <% if (availableRooms && availableRooms.length > 0) { %>
+            <% availableRooms.forEach(r => { %>
+                <option value="<%= r.id %>"><%= r.room_no %> (<%= r.capacity - r.occupied %> spots left)</option>
+            <% }) %>
+        <% } else { %>
+            <option value="" disabled>No available rooms</option>
+        <% } %>
     </select>
     <br><br>
 
     <button>Allocate</button>
-    </div>
-     <div class="search">
-    <h2>Search Student</h2>
-
- <input type="text" id="searchText" placeholder="Enter ID or Name">
- <button onclick="searchStudent()">Search</button>
- </div>
 </form>
+</div>
+
+<!-- ============= SEARCH STUDENT =============== -->
+<div class="search">
+    <h2>Search Student</h2>
+    <input type="text" id="searchText" placeholder="Enter ID or Name">
+    <button onclick="searchStudent()">Search</button>
+</div>
+
 </div>
 
 <hr>
@@ -176,14 +368,11 @@ async function searchStudent() {
         <a href="/students/delete/<%= s.id %>">
             <button>Delete</button>
         </a>
-        
     </p>
 <% }) %>
-
 </div>
 
 <div class="rooms">
-
 <!-- ============= ROOMS LIST =============== -->
 <h2>Rooms List</h2>
 <% rooms.forEach(r => { %>
@@ -196,11 +385,10 @@ async function searchStudent() {
         <a href="/rooms/delete/<%= r.id %>">
             <button>Delete</button>
         </a>
-        
     </p>
 <% }) %>
-
 </div>
+
 <div class="allocation">
 <!-- ============= ALLOCATIONS LIST =============== -->
 <h2>Room Allocations</h2>
@@ -214,13 +402,10 @@ async function searchStudent() {
         <a href="/allocations/delete/<%= a.id %>">
             <button>Delete</button>
         </a>
-        
     </p>
 <% }) %>
 </div>
 </div>
-<div class="fotter">
 
-</div>
 </body>
 </html>
