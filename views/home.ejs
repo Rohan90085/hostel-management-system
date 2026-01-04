@@ -317,7 +317,7 @@ window.onclick = function(event) {
 <form method="POST" action="/allocate">
     <label>Student (Unallocated):</label>
     <select name="student_id" required>
-        <option value="">-- Select Student --</option>
+        <option value=""> Select Student </option>
         <% if (unallocatedStudents && unallocatedStudents.length > 0) { %>
             <% unallocatedStudents.forEach(s => { %>
                 <option value="<%= s.id %>"><%= s.name %> (ID: <%= s.id %>)</option>
@@ -330,7 +330,7 @@ window.onclick = function(event) {
 
     <label>Available Room:</label>
     <select name="room_id" required>
-        <option value="">-- Select Room --</option>
+        <option value="">   Select Room </option>
         <% if (availableRooms && availableRooms.length > 0) { %>
             <% availableRooms.forEach(r => { %>
                 <option value="<%= r.id %>"><%= r.room_no %> (<%= r.capacity - r.occupied %> spots left)</option>
